@@ -12,6 +12,7 @@
         "fideloper/proxy": "^4.0",
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",
+        "ramsey/uuid": "^3.8",
         "twilio/sdk": "^5.33"
     },
     "require-dev": {
