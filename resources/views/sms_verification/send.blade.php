@@ -37,7 +37,7 @@
             </button>
         </div>
     </form>
-    @if(session()->has('validated'))
+    @if(session()->has('verified'))
         @component('sms_verification.components.alert')
             @slot('title')
             Success!
@@ -45,6 +45,16 @@
             
             @slot('content')
             Your phone number has been verified
+            @endslot
+        @endcomponent
+    @elseif(session()->has('unvalidate'))
+        @component('sms_verification.components.alert')
+            @slot('title')
+            Failed!
+            @endslot
+            
+            @slot('content')
+            Your email address or phone number has been registered.
             @endslot
         @endcomponent
     @endif

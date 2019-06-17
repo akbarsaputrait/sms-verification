@@ -7,11 +7,12 @@ use Illuminate\Http\Request;
 use PHPUnit\Framework\MockObject\Stub\Exception;
 use Twilio\Rest\Client;
 use Ramsey\Uuid\Uuid;
-
+use Twilio\Http\Response;
 
 define('ACCOUNT_SID', config('app.twilio')['TWILIO_ACCOUNT_SID']);
 define('AUTH_TOKEN', config('app.twilio')['TWILIO_AUTH_TOKEN']);
 define('SERVICE_ID', config('app.twilio')['TWILIO_SERVICE_SID']);
+
 class VerificationController extends Controller
 {
 
@@ -40,6 +41,12 @@ class VerificationController extends Controller
      */
     public function sendSms(Request $request)
     {
+        // Check if user has ben registered (Phone Number or Email)
+        if(User::where('mobileNumber', $request->mobileNumber)->orWhere('email', $request->email)->exists()) {
+            session()->flash('unvalidate');
+            return redirect()->route('sms');
+        }
+
         try {
             $client = new Client(ACCOUNT_SID, AUTH_TOKEN);
 
@@ -92,14 +99,15 @@ class VerificationController extends Controller
 
         if(!$check->valid) {
             session()->flash('failed');
+            session()->flash('sended');
             return redirect()->route('check', ['mobileNumber' => $request->mobileNumber]);
+        } else {
+            $user = User::where('mobileNumber', $request->mobileNumber)->where('verified', false)->first();
+            $user->verified = true;
+            $user->save();
+
+            session()->flash('verified', true);
+            return redirect()->route('sms');
         }
-
-        $user = User::where('mobileNumber', $request->mobileNumber)->first();
-        $user->verified = true;
-        $user->save();
-
-        session()->flash('validated', true);
-        return redirect()->route('sms');
     }
 }
