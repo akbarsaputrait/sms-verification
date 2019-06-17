@@ -1,7 +1,7 @@
 # sms-verification
 Simple SMS Verification with Laravel + Twilio
 
-composer require twilio/sdk
+dont forget to ```composer install``` first
 
 Enpoint
   - [host]/api/sms
