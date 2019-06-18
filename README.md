@@ -1,7 +1,7 @@
 # sms-verification
 Simple SMS Verification with Laravel + Twilio
 
-dont forget to ```composer install``` first and ```php artisan migrate```
+Create new file ```.env``` and copy from ```.env.example``` dont forget to ```composer install``` first and ```php artisan migrate``` also ```php artisan key:generate```
 
 add this to your .env
 ```
