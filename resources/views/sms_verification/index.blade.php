@@ -8,7 +8,6 @@
 
     <!-- This is our compiled CSS file which is created by Tailwind CLI -->
     <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
-
     <title>SMS Verification</title>
 </head>
 
