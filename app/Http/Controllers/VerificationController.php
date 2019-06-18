@@ -6,8 +6,6 @@ use App\User;
 use Illuminate\Http\Request;
 use PHPUnit\Framework\MockObject\Stub\Exception;
 use Twilio\Rest\Client;
-use Ramsey\Uuid\Uuid;
-use Twilio\Http\Response;
 
 define('ACCOUNT_SID', config('app.twilio')['TWILIO_ACCOUNT_SID']);
 define('AUTH_TOKEN', config('app.twilio')['TWILIO_AUTH_TOKEN']);
@@ -15,17 +13,8 @@ define('SERVICE_ID', config('app.twilio')['TWILIO_SERVICE_SID']);
 
 class VerificationController extends Controller
 {
-
-    public function index()
-    {
-        return view('sms_verification.send');
-    }
-
     public function check()
     {
-        if (!session()->has('sended')) {
-            return redirect()->route('sms');
-        }
         return view('sms_verification.validate');
     }
 
@@ -41,37 +30,29 @@ class VerificationController extends Controller
      */
     public function sendSms(Request $request)
     {
-        // Check if user has ben registered (Phone Number or Email)
-        // if(User::where('mobileNumber', $request->mobileNumber)->orWhere('email', $request->email)->exists()) {
-        //     session()->flash('unvalidate');
-        //     return redirect()->route('sms');
-        // }
 
-        try {
-            $client = new Client(ACCOUNT_SID, AUTH_TOKEN);
+        // Check if user has ben registered (Phone Number)
+        $user = User::where('encrypted', $request->code)->first();
+        $status = 'unvalid-account';
 
-            $send = $client
-                ->verify
-                ->v2
-                ->services(SERVICE_ID)
-                ->verifications
-                ->create($request->mobileNumber, "sms");
+        if (!is_null($user)) {
+            try {
+                $client = new Client(ACCOUNT_SID, AUTH_TOKEN);
+                $send = $client->verify->v2
+                    ->services(SERVICE_ID)
+                    ->verifications
+                    ->create($user->mobile_number, "sms");
 
-            if ($send->sid) {
-                $user = new User;
-                $user->userid = Uuid::uuid4()->getHex();
-                $user->fullName = $request->fullName;
-                $user->email = $request->email;
-                $user->mobileNumber = $request->mobileNumber;
-                $user->verified = false;
-                $user->save();
+                $status = 'valid-account';
+                if ($send->sid) {
+                    $status = 'code-sended';
+                }
+            } catch (Exception $e) {
+                return $e->getMessage();
             }
-        } catch (Exception $e) {
-            $e->getMessage();
         }
 
-        session()->flash('sended', true);
-        return redirect()->route('check', ['uuid' => $user->userid]);
+        return view('sms_verification.validate', ['status' => $status, 'user' => $user]);
     }
 
 
@@ -81,9 +62,11 @@ class VerificationController extends Controller
      * https: //www.twilio.com/docs/verify/api-beta/verification-check-beta
      * API Reference -> Verification Check
      *
-    */
+     */
     public function checkVerification(Request $request)
     {
+        $status = 'unvalid-code';
+        $data = null;
         try {
             $user = User::find($request->uuid);
 
@@ -93,22 +76,20 @@ class VerificationController extends Controller
                 ->verify->v2->services(SERVICE_ID)
                 ->verificationChecks
                 ->create($request->code,
-                    array("to" => $user->mobileNumber)
+                    ['to' => $request->mobile_number]
                 );
+
+            if ($check->valid) {
+                $status = 'valid';
+                if ($check->status === 'denied' || $check->status === 'expired') {
+                    $status = 'unvalid';
+                }
+                $status = $status . '-verification-' . $check->status;
+            }
         } catch (Exception $e) {
-            $e->getMessage();
+            return $e->getMessage();
         }
 
-        if(!$check->valid) {
-            session()->flash('failed');
-            session()->flash('sended');
-            return redirect()->route('check', ['uuid' => $request->uuid]);
-        } else {
-            $user->verified = true;
-            $user->save();
-
-            session()->flash('verified', true);
-            return redirect()->route('sms');
-        }
+        return view('sms_verification.validate', ['status' => $status,]);
     }
 }
