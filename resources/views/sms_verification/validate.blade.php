@@ -6,7 +6,7 @@
     <form class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" id="form" method="POST"
         action="{{ route('check.store') }}">
         @csrf
-        <input type="hidden" name="mobileNumber" value="{{ request()->route('mobileNumber') }}">
+        <input type="hidden" name="uuid" value="{{ request()->route('uuid') }}">
         <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="code">
                 Verification Code

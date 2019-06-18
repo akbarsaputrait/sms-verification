@@ -18,5 +18,5 @@
 Route::get('/', 'VerificationController@index')->name('sms');
 Route::post('sms', 'VerificationController@sendSms')->name('sms.store');
 
-Route::get('/check/{mobileNumber}', 'VerificationController@check')->name('check');
+Route::get('/check/{uuid}', 'VerificationController@check')->name('check');
 Route::post('check', 'VerificationController@checkVerification')->name('check.store');

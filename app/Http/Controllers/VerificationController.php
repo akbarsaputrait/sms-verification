@@ -42,10 +42,10 @@ class VerificationController extends Controller
     public function sendSms(Request $request)
     {
         // Check if user has ben registered (Phone Number or Email)
-        if(User::where('mobileNumber', $request->mobileNumber)->orWhere('email', $request->email)->exists()) {
-            session()->flash('unvalidate');
-            return redirect()->route('sms');
-        }
+        // if(User::where('mobileNumber', $request->mobileNumber)->orWhere('email', $request->email)->exists()) {
+        //     session()->flash('unvalidate');
+        //     return redirect()->route('sms');
+        // }
 
         try {
             $client = new Client(ACCOUNT_SID, AUTH_TOKEN);
@@ -71,7 +71,7 @@ class VerificationController extends Controller
         }
 
         session()->flash('sended', true);
-        return redirect()->route('check', ['mobileNumber' => $request->mobileNumber]);
+        return redirect()->route('check', ['uuid' => $user->userid]);
     }
 
 
@@ -85,13 +85,15 @@ class VerificationController extends Controller
     public function checkVerification(Request $request)
     {
         try {
+            $user = User::find($request->uuid);
+
             $client = new Client(ACCOUNT_SID, AUTH_TOKEN);
 
             $check = $client
                 ->verify->v2->services(SERVICE_ID)
                 ->verificationChecks
                 ->create($request->code,
-                    array("to" => $request->mobileNumber)
+                    array("to" => $user->mobileNumber)
                 );
         } catch (Exception $e) {
             $e->getMessage();
@@ -100,9 +102,8 @@ class VerificationController extends Controller
         if(!$check->valid) {
             session()->flash('failed');
             session()->flash('sended');
-            return redirect()->route('check', ['mobileNumber' => $request->mobileNumber]);
+            return redirect()->route('check', ['uuid' => $request->uuid]);
         } else {
-            $user = User::where('mobileNumber', $request->mobileNumber)->where('verified', false)->first();
             $user->verified = true;
             $user->save();
 
