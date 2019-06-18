@@ -4,19 +4,21 @@
     <div class="sm:w-1/1 md:w-1/3 lg:w-1/4 xl:w-1/4">
         <h1 class="text-2xl mb-6 text-center">SMS Verification</h1>
         @if(isset($status))
-            <div class="{{$status}} bg-{{(strpos($status, 'unvalid')) ? 'red': 'teal'}}-100 border-t-4 border-{{(strpos($status, 'unvalid')) ? 'red': 'teal'}}-500 rounded-b text-{{(strpos($status, 'unvalid')) ? 'red': 'teal'}}-900 px-4 py-3 shadow-md mb-4"
+            <div class="bg-{{strpos($status, 'unvalid') !== false ? 'red': 'teal'}}-100 border-t-4 border-{{strpos($status, 'unvalid') !== false ? 'red': 'teal'}}-500 rounded-b text-{{strpos($status, 'unvalid') !== false ? 'red': 'teal'}}-900 px-4 py-3 shadow-md mb-4"
                  role="alert">
                 <div>
                     <p class="font-bold">
-                        {{ (strpos($status, 'unvalid')) ? 'Failed!' : 'Success!' }}
+                        {{ strpos($status, 'unvalid') !== false ? 'Failed!' : 'Success!' }}
                     </p>
-                    <p class="text-sm">
+                    <p class="text-sm break-all">
                         @if($status === 'unvalid-account')
                             Your Account is not registered.
                         @elseif($status === 'code-sended')
                             Verification Code Sent Successfully.
-                        @elseif(strpos($status, 'verification'))
+                        @elseif(strpos($status, 'verification') !== false)
                             Verification Code {{ucfirst(explode('-', $status)[2])}}
+                        @elseif(isset($msg) && !is_null($msg))
+                            {{$msg}}
                         @endif
                     </p>
                 </div>

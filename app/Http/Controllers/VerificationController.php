@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\User;
 use Illuminate\Http\Request;
-use PHPUnit\Framework\MockObject\Stub\Exception;
+use Twilio\Exceptions\RestException;
 use Twilio\Rest\Client;
 
 define('ACCOUNT_SID', config('app.twilio')['TWILIO_ACCOUNT_SID']);
@@ -34,6 +34,7 @@ class VerificationController extends Controller
         // Check if user has ben registered (Phone Number)
         $user = User::where('encrypted', $request->code)->first();
         $status = 'unvalid-account';
+        $msg = null;
 
         if (!is_null($user)) {
             try {
@@ -47,12 +48,13 @@ class VerificationController extends Controller
                 if ($send->sid) {
                     $status = 'code-sended';
                 }
-            } catch (Exception $e) {
-                return $e->getMessage();
+            } catch (RestException $e) {
+                $status = 'unvalid-process';
+                $msg =  $e->getMessage();
             }
         }
 
-        return view('sms_verification.validate', ['status' => $status, 'user' => $user]);
+        return view('sms_verification.validate', ['status' => $status, 'user' => $user, 'msg' => $msg]);
     }
 
 
@@ -66,10 +68,8 @@ class VerificationController extends Controller
     public function checkVerification(Request $request)
     {
         $status = 'unvalid-code';
-        $data = null;
+        $msg = null;
         try {
-            $user = User::find($request->uuid);
-
             $client = new Client(ACCOUNT_SID, AUTH_TOKEN);
 
             $check = $client
@@ -86,10 +86,11 @@ class VerificationController extends Controller
                 }
                 $status = $status . '-verification-' . $check->status;
             }
-        } catch (Exception $e) {
-            return $e->getMessage();
+        } catch (RestException $e) {
+            $status = 'unvalid-process';
+            $msg =  $e->getMessage();
         }
 
-        return view('sms_verification.validate', ['status' => $status,]);
+        return view('sms_verification.validate', ['status' => $status, 'msg' => $msg]);
     }
 }
